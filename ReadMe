@@ -1,0 +1,110 @@
+//EXPLANATIONS OF THE PROGRAM-----------------------------------------------------------------------------------------------------------------
+	- Explanation of DNS client:
+		The approach is to send a UDP packet (containing the DNS query) to the designated DNS server (130.245.145.7) 
+		and wait for the potential respons(es). 
+		(By using the function rcvfrom(...)) After receiving the first UDP packet (containing the DNS response), rather than
+		considering it as the correct/original DNS response, we will call the function rcvfrom(...) again to see if we will 
+		receive any other UDP packet (again, containg the DNS response). So, there are two possible cases:
+		
+			- We only receive one packet (in case DNS-attack didn't happen). In this case, the second rcvfrom(...) function call
+			will terminate because of the timer.
+			
+			- We receive more than one packet (in case of DNS-attack). In this case, the second rcvfrom(...) function indeed get
+			the original DNS response (not the spoofed one).
+			
+		The corresponding c program (DNS.c) contains the following functions:
+			- resolve_hostname(...): This function make a DNS query, puts it in the UDP packet and sends it to the designated dns server. Then, 
+				based on the number of packets, it receives, it determines whether the attack happens or not. This function is used in the main.
+			
+			- create_dns_header(...): This helper function makes the DNS query header. This function is used in the function resolve_hostname
+			
+			- read_answers_from_buffer(...): This function reads/extracts the answers (the IPs) from the buffer. This function is used 
+				in the function resolve_hostname.
+			
+			- read_authorities_from_buffer(...): This function reads/extracts the authorities from the buffer. This function is used in 
+				the function resolve_hostname.
+			
+			- read_additionals_from_buffer(...): This function reads the additional information from the buffer. This function is used 
+				in the function resolve_hostname.
+			
+			-  change_to_dns_f (...): This function changes the name of the website to the dns-required format name. This function is 
+				used in the function resolve_hostname
+			
+			Some other helper functions: 
+				- read_n(...): This (helper) function is used to read the name of the website from the buffer, modify it and return it. 
+					This function is used in the functions read_answers_from_buffer, etc. 
+				
+		
+//SAMPLE EXECUTIONS--------------------------------------------------------------------------------------------------------------------
+	- How to build and run the program?
+		- For compiling: gcc ./DNS.c -o meantest
+		- For running it: ./meantest [server IP] [host name] [optional time-out]
+			NOTE: the default value for the timeout is 15 seconds.
+
+//-------------------------------------------------------------------------------------------------------------------
+	- First sample execution (where attack happens):
+	$ ./meantest 130.245.145.7 falun.com
+		DNS_Server is 130.245.145.7
+		HostName is falun.com
+
+		Resolving falun.com
+		SENDING THE REQUIRED PACKET WHICH CONTAINS THE DNS QUERY!!
+		UDP PACKET SENT SUCCESSFULLY :)
+		RECEIVING THE UDP PACKET(S), WHICH CONTAIN(S) DNS REPLY INFO:
+		-----------------------------------------------------------------------------------
+		RECEIVING RESPONSE PACKET NUMBER (1)
+		THE RESPONSE CONTAINS THE FOLLOWING INFORMATION:
+		 IT CONTAINS 1 QUESTIONS.
+		 IT CONTAINS 1 ANSWERS.
+		 IT CONTAINS 0 AUTHORATIVE SERVERS.
+		 0 ADDITIONAL RECORDS: 
+
+		IN THIS RESOPNSE, WE HAVE 1  ANSWER RECORDS:
+		NAME: falun.com HAS IPv4 ADDRESS: 130.245.145.7
+
+		IN THIS RESOPNSE, WE HAVE 0 AUTHORITIVE RECORDS:
+
+		IN THIS RESPONSE, WE HAVE 0 ADDITIONAL RECORDS:
+		-----------------------------------------------------------------------------------
+		RECEIVING RESPONSE PACKET NUMBER (2)
+		THE RESPONSE CONTAINS THE FOLLOWING INFORMATION:
+		 IT CONTAINS 1 QUESTIONS.
+		 IT CONTAINS 1 ANSWERS.
+		 IT CONTAINS 0 AUTHORATIVE SERVERS.
+		 0 ADDITIONAL RECORDS: 
+
+		IN THIS RESOPNSE, WE HAVE 1  ANSWER RECORDS:
+		NAME: falun.com HAS IPv4 ADDRESS: 192.121.234.16
+
+		IN THIS RESOPNSE, WE HAVE 0 AUTHORITIVE RECORDS:
+
+		IN THIS RESPONSE, WE HAVE 0 ADDITIONAL RECORDS:
+
+		WE RECEIVE MORE THAN ONE DNS-QUERY RESPONSES. HENCE, DNS ATTACK HAPPENED.	
+//-------------------------------------------------------------------------------------------------------------------	
+	- Second sample execution (where attack doesn't happen):
+	$ ./meantest 130.245.145.7 facebook.com
+		DNS_Server is 130.245.145.7
+		HostName is facebook.com
+
+		Resolving facebook.com
+		SENDING THE REQUIRED PACKET WHICH CONTAINS THE DNS QUERY!!
+		UDP PACKET SENT SUCCESSFULLY :)
+		RECEIVING THE UDP PACKET(S), WHICH CONTAIN(S) DNS REPLY INFO:
+		-----------------------------------------------------------------------------------
+		RECEIVING RESPONSE PACKET NUMBER (1)
+		THE RESPONSE CONTAINS THE FOLLOWING INFORMATION:
+		 IT CONTAINS 1 QUESTIONS.
+		 IT CONTAINS 1 ANSWERS.
+		 IT CONTAINS 0 AUTHORATIVE SERVERS.
+		 0 ADDITIONAL RECORDS: 
+
+		IN THIS RESOPNSE, WE HAVE 1  ANSWER RECORDS:
+		NAME: facebook.com HAS IPv4 ADDRESS: 69.171.230.5
+
+		IN THIS RESOPNSE, WE HAVE 0 AUTHORITIVE RECORDS:
+
+		IN THIS RESPONSE, WE HAVE 0 ADDITIONAL RECORDS:
+
+		TIME-OUT HAPPENED!
+		WE RECEIVE ONLY ONE DNS-QUERY RESPONSE. HENCE, WE DIDN'T HAVE ANY DSN-ATTACK.

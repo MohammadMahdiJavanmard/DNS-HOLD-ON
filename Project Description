@@ -1,0 +1,7 @@
+Description:
+In this project, I developed a DNS client that can wait for a second reply in the face of DNS injecting censors.
+
+It is basically from the following paper:
+Hold-On: Protecting Against On-Path DNS Poisoninng by Duan et al.
+
+I implemented a DNS client which is able to create a DNS query and send it to a given IP address. The client waits for a configurabnle amount of time to receive a second reply. For sample executions, please refer to ReadMe file.
